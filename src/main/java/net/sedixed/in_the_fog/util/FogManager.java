@@ -5,10 +5,10 @@ import net.minecraft.client.Minecraft;
 public class FogManager {
     private static boolean fogActive = false;
     private static float fogProgress = 0.0f;
+    private static int fogTimer = 0;
 
     private static final float SPEED = 0.004f;
-    private static int fogTimer = 0;
-    private static final float fogChancePercentagePerTick = 0.1f;
+    private static final float FOG_CHANCE_PERCENTAGE_PER_TICK = 0.1f;
 
     public static void tick(Minecraft mc) {
         if (mc.level == null || mc.player == null) return;
@@ -25,9 +25,9 @@ public class FogManager {
                 fogActive = false;
             }
         } else {
-            if (mc.level.random.nextFloat() < fogChancePercentagePerTick / 100.0f) {
+            if (mc.level.random.nextFloat() < FOG_CHANCE_PERCENTAGE_PER_TICK / 100.0f) {
                 fogActive = true;
-                fogTimer = 20 * 30 + mc.level.random.nextInt(20 * 60);
+                fogTimer = 20 * 30 + mc.level.random.nextInt(20 * 60); // TODO fog duration
             }
         }
     }
@@ -37,10 +37,14 @@ public class FogManager {
     }
 
     public static boolean shouldRenderFog() {
-        return fogProgress > 0.01f;
+        return fogProgress > 0.0f;
     }
 
-    public static void setForcedFog(boolean enabled) {
+    public static void setFogActive(boolean enabled) {
         fogActive = enabled;
+    }
+
+    public static boolean isFogActive() {
+        return fogActive;
     }
 }
