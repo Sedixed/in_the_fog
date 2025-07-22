@@ -1,0 +1,9 @@
+{
+  "entity.in_the_fog.lost_miner": "Mineur égaré",
+  "entity.in_the_fog.lost": "Égaré",
+  "entity.in_the_fog.lost_fighter": "Combattant égaré",
+  "entity.in_the_fog.lost_farmer": "Agriculteur égaré",
+  "entity.in_the_fog.lost_fisherman": "Pêcheur égaré",
+  "entity.in_the_fog.lost_builder": "Constructeur égaré",
+  "entity.in_the_fog.lost_adventurer": "Aventurier égaré"
+}
