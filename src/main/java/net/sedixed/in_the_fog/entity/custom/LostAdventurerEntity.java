@@ -7,6 +7,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.level.Level;
+import net.sedixed.in_the_fog.entity.ai.ClimbLadderGoal;
 
 public class LostAdventurerEntity extends AbstractLostEntity {
     public LostAdventurerEntity(EntityType<? extends PathfinderMob> pEntityType, Level pLevel) {
@@ -24,5 +25,11 @@ public class LostAdventurerEntity extends AbstractLostEntity {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, false));
+        this.goalSelector.addGoal(3, new ClimbLadderGoal(this));
+    }
+
+    @Override
+    protected void initializeEntity() {
+        // TODO
     }
 }

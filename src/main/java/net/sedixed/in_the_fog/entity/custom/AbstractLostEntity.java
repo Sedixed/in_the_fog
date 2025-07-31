@@ -1,24 +1,24 @@
 package net.sedixed.in_the_fog.entity.custom;
 
 import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.SpawnGroupData;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.sedixed.in_the_fog.entity.ai.*;
 import net.sedixed.in_the_fog.entity.variant.LostVariant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +31,8 @@ public abstract class AbstractLostEntity extends PathfinderMob {
 
     protected AbstractLostEntity(EntityType<? extends PathfinderMob> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
+        initializeEntity();
+        setAggressive(true);
     }
 
     @Override
@@ -44,14 +46,30 @@ public abstract class AbstractLostEntity extends PathfinderMob {
         super.registerGoals();
 
         this.goalSelector.addGoal(1, new FloatGoal(this));
-        this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
+        this.goalSelector.addGoal(1, new LostOpenDoorGoal(this, true));
         // Melee and ranged attack must be defined in subclasses
-        this.goalSelector.addGoal(2, new LookAtPlayerGoal(this, Player.class, 48.0F));
-        this.goalSelector.addGoal(3, new RandomStrollGoal(this, 1.0D));
-        this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 48.0F));
+        this.goalSelector.addGoal(5, new RandomStrollGoal(this, 1.0D));
 
-        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        this.targetSelector.addGoal(1, new LostTargetGoal(this));
+        this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
+
     }
+
+    @Override
+    protected PathNavigation createNavigation(Level world) {
+        return new ClimberNavigation(this, world);
+    }
+
+    @Override
+    public boolean onClimbable() {
+        BlockPos pos = this.blockPosition();
+        return isClimbable(level().getBlockState(pos)) ||
+                isClimbable(level().getBlockState(pos.above())) ||
+                isClimbable(level().getBlockState(pos.below())) ||
+                isClimbable(level().getBlockState(pos.below(2)));
+    }
+
 
     @Override
     public SpawnGroupData finalizeSpawn(
@@ -68,16 +86,27 @@ public abstract class AbstractLostEntity extends PathfinderMob {
         return super.finalizeSpawn(pLevel, pDifficulty, pReason, pSpawnData, pDataTag);
     }
 
-    public LostVariant getVariant() {
-        return LostVariant.byId(getTypeVariant() & 255);
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        this.updateSwingTime();
     }
 
-    private void setVariant(LostVariant variant) {
-        entityData.set(DATA_ID_TYPE_VARIANT, variant.getId() & 255);
+    @Override
+    public void tick() {
+        super.tick();
+        double y = this.getLookControl().getWantedY();
+        //System.out.println("Looking at height : " + y);
     }
 
-    private int getTypeVariant() {
-        return entityData.get(DATA_ID_TYPE_VARIANT);
+    @Override
+    public boolean canHoldItem(ItemStack stack) {
+        return false;
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) {
+        // No loot for you bozo
     }
 
     @Override
@@ -92,11 +121,29 @@ public abstract class AbstractLostEntity extends PathfinderMob {
         entityData.set(DATA_ID_TYPE_VARIANT, pCompound.getInt("Variant"));
     }
 
+    protected abstract void initializeEntity();
+
+    public LostVariant getVariant() {
+        return LostVariant.byId(getTypeVariant() & 255);
+    }
+
+    private void setVariant(LostVariant variant) {
+        entityData.set(DATA_ID_TYPE_VARIANT, variant.getId() & 255);
+    }
+
+    private int getTypeVariant() {
+        return entityData.get(DATA_ID_TYPE_VARIANT);
+    }
+
     public boolean isForcedVariant() {
         return forcedVariant;
     }
 
     public void setForcedVariant(boolean forcedVariant) {
         this.forcedVariant = forcedVariant;
+    }
+
+    private boolean isClimbable(BlockState state) {
+        return state.is(Blocks.LADDER) || state.is(Blocks.VINE) || state.is(Blocks.SCAFFOLDING);
     }
 }

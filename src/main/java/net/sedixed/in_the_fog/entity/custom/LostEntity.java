@@ -1,5 +1,6 @@
 package net.sedixed.in_the_fog.entity.custom;
 
+
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
@@ -7,6 +8,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.level.Level;
+import net.sedixed.in_the_fog.entity.ai.ClimbLadderGoal;
 
 public class LostEntity extends AbstractLostEntity {
     public LostEntity(EntityType<? extends PathfinderMob> pEntityType, Level pLevel) {
@@ -23,6 +25,12 @@ public class LostEntity extends AbstractLostEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, false));
+        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, true));
+        this.goalSelector.addGoal(3, new ClimbLadderGoal(this));
+    }
+
+    @Override
+    protected void initializeEntity() {
+        // TODO
     }
 }
